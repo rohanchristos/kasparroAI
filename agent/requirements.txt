@@ -1,0 +1,43 @@
+# ============================================================
+# Kasparro AI Agent — Python Dependencies
+# ============================================================
+
+# Core framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+uvloop==0.21.0; sys_platform != "win32"
+httptools==0.6.4
+
+# Environment / Config
+python-dotenv==1.0.1
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# LLM / AI
+langchain==0.3.14
+langchain-openai==0.3.0
+langchain-core==0.3.29
+langgraph==0.2.62
+
+# Async HTTP
+httpx==0.28.1
+
+# Auth / JWT
+python-jose[cryptography]==3.3.0
+
+# Rate limiting
+slowapi==0.1.9
+
+# Structured logging
+structlog==24.4.0
+
+# Gmail integration
+google-auth==2.37.0
+google-auth-oauthlib==1.2.1
+google-api-python-client==2.159.0
+
+# HTML parsing (for email body extraction)
+beautifulsoup4==4.12.3
+
+# File uploads
+python-multipart==0.0.20

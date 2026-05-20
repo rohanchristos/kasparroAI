@@ -1,0 +1,99 @@
+# ============================================================
+# Kasparro AI — Docker Compose PRODUCTION Override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================================
+
+
+services:
+  # ── PostgreSQL ─────────────────────────────────────────────
+  postgres:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Redis ──────────────────────────────────────────────────
+  redis:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ── Node.js Backend ────────────────────────────────────────
+  nodejs:
+    restart: always
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    volumes: []  # No source mounts in production
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ── FastAPI Agent ──────────────────────────────────────────
+  fastapi:
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    volumes: []
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ── React Frontend ─────────────────────────────────────────
+  react:
+    restart: always
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    volumes: []
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ── NGINX ──────────────────────────────────────────────────
+  nginx:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
