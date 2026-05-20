@@ -108,7 +108,7 @@ Total automation is dangerous for e-commerce. A hallucinating AI offering a $500
 * Multi-LLM provider support (Grok, OpenAI, OpenRouter)
 * Full database audit trail of all actions
 
-**OUT OF SCOPE (For this hackathon):**
+**OUT OF SCOPE (Current Release):**
 * Slack or Microsoft Teams integration
 * Phone/Voice AI support agents
 * Multi-language translation support
