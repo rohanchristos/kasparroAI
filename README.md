@@ -1,362 +1,143 @@
-# Kasparro AI — Customer Support Agent
+# Kasparro AI Customer Support Agent
+An intelligent, dual-path automation platform that categorizes, routes, and drafts responses to customer support emails.
 
-> AI-powered customer support platform that automatically analyzes, categorizes, and responds to customer emails using LangGraph agents with switchable LLM providers (Grok / OpenAI).
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 
----
+## 🎯 Problem Statement
+Customer support teams at e-commerce brands are overwhelmed during peak seasons, resulting in slow response times and inconsistent reply quality. Human agents spend the majority of their time answering simple, repetitive questions instead of focusing on complex, relationship-saving interactions.
 
-## Architecture
+## ✨ What It Does
+*   **Intelligent Ingestion:** Automatically fetches emails from a support Gmail inbox.
+*   **AI Categorization:** LangGraph agent categorizes emails by intent, sentiment, and urgency.
+*   **Dual-Path Routing:** Safely auto-resolves low-risk queries (FAQs, tracking) and routes high-risk queries (refunds, complaints) to a manager dashboard.
+*   **AI Drafting:** Generates context-aware, empathetic email drafts for human approval.
+*   **Multi-LLM Support:** Seamlessly switch between Grok, OpenAI, and OpenRouter directly from the dashboard.
+*   **Audit Trail:** Maintains a strict, immutable database log of every automated and manual action.
 
-```
-                        ┌─────────────────┐
-                        │   Browser :80   │
-                        └────────┬────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │   NGINX :80     │
-                        │  Reverse Proxy  │
-                        └───┬────┬────┬───┘
-                            │    │    │
-              ┌─────────────┘    │    └──────────────┐
-              │                  │                   │
-     ┌────────▼────────┐ ┌──────▼───────┐  ┌───────▼────────┐
-     │  React :3000    │ │ Node.js :5000│  │ FastAPI :8000  │
-     │  Dashboard UI   │ │ REST API     │  │ AI Agent       │
-     │  • Tickets      │ │ • Auth/JWT   │  │ • LangGraph    │
-     │  • Analytics    │ │ • Tickets    │  │ • Gmail        │
-     │  • Settings     │ │ • Audit      │  │ • Email Poller │
-     │  • Audit Log    │ │ • Analytics  │  │ • LLM Service  │
-     └────────────────┘  └──┬───────┬──┘  └───┬──────┬─────┘
-                            │       │         │      │
-                   ┌────────▼──┐ ┌──▼────┐    │   ┌──▼──────────┐
-                   │PostgreSQL │ │ Redis │    │   │ Gmail API   │
-                   │  :5432    │ │ :6379 │    │   └─────────────┘
-                   └───────────┘ └───────┘    │
-                                        ┌─────▼──────────┐
-                                        │  Grok / OpenAI │
-                                        │  LLM APIs      │
-                                        └────────────────┘
+## 🏗️ Architecture
+```text
+[React] → [NGINX] → [Node.js + Redis] → [PostgreSQL]
+                  ↘ [FastAPI + LangGraph] → [Gmail API]
+                                          → [Grok / OpenAI / OpenRouter]
 ```
 
-### Services (6 containers)
+## 🛠️ Tech Stack
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Frontend** | React 18, Tailwind CSS | Responsive, real-time dashboard for managers to review tickets and analytics. |
+| **Backend** | Node.js, Express.js | Core API handling JWT auth, ticket CRUD, and orchestration. |
+| **AI Agent** | Python, FastAPI, LangGraph | Dedicated microservice for asynchronous LLM workflows and state machine logic. |
+| **Database** | PostgreSQL | Persistent, relational data store enforcing strict schema constraints. |
+| **Cache** | Redis | In-memory store for JWT blacklisting and high-speed analytics caching. |
+| **Infra** | Docker, NGINX | Containerized multi-service orchestration with a unified reverse proxy. |
 
-| Service    | Port | Technology                    | Purpose                             |
-|------------|------|-------------------------------|-------------------------------------|
-| `nginx`    | 80   | NGINX                         | Reverse proxy, SSL, gzip, caching   |
-| `react`    | 3000 | React 18 + Tailwind           | Manager dashboard UI                |
-| `nodejs`   | 5000 | Express + PostgreSQL          | REST API, auth, tickets, audit      |
-| `fastapi`  | 8000 | FastAPI + LangGraph           | AI agent, Gmail, email poller       |
-| `postgres` | 5432 | PostgreSQL 16                 | Tickets, users, audit logs          |
-| `redis`    | 6379 | Redis 7                       | Session cache, LLM prefs, analytics |
+## 📋 Prerequisites
+*   Docker + Docker Compose installed on your machine
+*   A Google Cloud Project with a Gmail account (for OAuth2 setup)
+*   Grok API key (available at x.ai)
+*   OpenAI API key (optional)
+*   OpenRouter API key (optional)
 
----
+## ⚙️ Environment Setup
 
-## Prerequisites
-
-- **Docker Desktop** ≥ 24.0 (with Docker Compose v2)
-- **Gmail account** with OAuth2 credentials
-- **Grok API key** (free at [console.x.ai](https://console.x.ai))
-- **OpenAI API key** *(optional, for provider switching)*
-
----
-
-## Quick Start
-
-### 1. Clone & Configure
-
+**1. Clone the repo:**
 ```bash
-git clone <repo-url> kasparoAi
-cd kasparoAi
+git clone https://github.com/rohanchristos/kasparro-AI-.git
+cd kasparro-AI-
+```
+
+**2. Configure Environment Variables:**
+```bash
 cp .env.example .env
 ```
 
-### 2. Set Environment Variables
+**3. Fill in the `.env` variables:**
+*   `GROK_API_KEY`: Required for the default fast/free AI responses.
+*   `OPENAI_API_KEY`: Optional, for premium GPT-4o reasoning.
+*   `OPENROUTER_API_KEY`: Optional, for accessing a wide range of LLMs through OpenRouter.
+*   `JWT_SECRET`: Random string for signing authentication tokens.
 
-Edit `.env` and fill in all required values (see [Environment Variables](#environment-variables) below).
+**4. Gmail OAuth2 Setup:**
+*   Go to the [Google Cloud Console](https://console.cloud.google.com/).
+*   Enable the **Gmail API** and configure the OAuth Consent Screen (add `https://mail.google.com/` scopes).
+*   Create an **OAuth Client ID** (Desktop App or Web App).
+*   Use the [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) with your Client ID and Secret to authorize the scopes and generate a **Refresh Token**.
+*   Add these to your `.env` as `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN`.
 
-### 3. Start All Services
+## 🚀 Running Locally
+
+Build and start the entire microservice architecture:
+```bash
+docker compose up --build -d
+```
+
+*   **Frontend Dashboard:** [http://localhost](http://localhost)
+*   **Node.js API:** [http://localhost/api](http://localhost/api)
+*   **Python Agent API:** [http://localhost/api/agent](http://localhost/api/agent)
+*   **System Health Check:** [http://localhost/api/audit/health](http://localhost/api/audit/health)
+
+## 🔑 Default Login
+When the application starts, it seeds a default administrator account into the database:
+*   **Email:** `manager@kasparro.com`
+*   **Password:** `Manager@123`
+
+## 🧪 Testing Without Real Emails
+If you don't want to set up Gmail polling immediately, you can trigger the AI agent manually by sending a POST request to the backend with a mock email:
 
 ```bash
-# Development
-docker-compose up --build -d
-
-# Production (with resource limits + log rotation)
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
-```
-
-### 4. Verify
-
-```bash
-# Check all 6 services are running
-docker-compose ps
-
-# Check health
-curl http://localhost/health
-curl http://localhost/api/audit/health
-```
-
-### 5. Login
-
-Open `http://localhost` in your browser.
-
-**Default credentials:**
-```
-Email:    admin@kasparro.com
-Password: admin123
-```
-
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-```env
-# Server
-PORT=5000
-NODE_ENV=development
-CORS_ORIGIN=http://localhost:3000
-
-# PostgreSQL
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=kasparro
-DB_USER=kasparro_user
-DB_PASSWORD=<strong-password>
-
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=<redis-password>
-
-# JWT
-JWT_SECRET=<random-64-char-string>
-JWT_EXPIRES_IN=24h
-
-# FastAPI Agent
-AGENT_API_URL=http://fastapi:8000
-```
-
-### Agent (`agent/.env`)
-
-```env
-# Server
-ENVIRONMENT=development
-PORT=8000
-
-# Grok (xAI)
-XAI_API_KEY=<your-grok-api-key>
-XAI_MODEL=grok-3-mini-fast
-
-# OpenAI (optional)
-OPENAI_API_KEY=<your-openai-api-key>
-OPENAI_MODEL=gpt-4o-mini
-
-# Gmail OAuth2
-GMAIL_CLIENT_ID=<oauth-client-id>
-GMAIL_CLIENT_SECRET=<oauth-client-secret>
-GMAIL_REFRESH_TOKEN=<oauth-refresh-token>
-GMAIL_USER_EMAIL=support@yourcompany.com
-
-# Backend API (for poller callbacks)
-BACKEND_API_URL=http://nodejs:5000
-BACKEND_API_KEY=<internal-api-key>
-
-# Email Polling
-EMAIL_POLL_INTERVAL=60
-```
-
----
-
-## Gmail OAuth2 Setup
-
-### Step 1: Create Google Cloud Project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create new project → "Kasparro AI"
-3. Enable **Gmail API** in APIs & Services
-
-### Step 2: Create OAuth2 Credentials
-
-1. Go to **APIs & Services → Credentials**
-2. Click **Create Credentials → OAuth Client ID**
-3. Application type: **Web application**
-4. Authorized redirect URIs: `https://developers.google.com/oauthplayground`
-5. Copy **Client ID** and **Client Secret**
-
-### Step 3: Get Refresh Token
-
-1. Go to [OAuth Playground](https://developers.google.com/oauthplayground)
-2. Click ⚙️ Settings → Check **"Use your own OAuth credentials"**
-3. Enter your Client ID and Secret
-4. In Step 1, select **Gmail API v1** → select all scopes
-5. Click **Authorize APIs** → Sign in with your support email
-6. Click **Exchange authorization code for tokens**
-7. Copy the **Refresh Token**
-
-### Step 4: Configure
-
-```env
-GMAIL_CLIENT_ID=123456789.apps.googleusercontent.com
-GMAIL_CLIENT_SECRET=GOCSPX-xxxxxxxxx
-GMAIL_REFRESH_TOKEN=1//xxxxxxxxx
-GMAIL_USER_EMAIL=support@yourcompany.com
-```
-
----
-
-## Grok API Setup
-
-1. Go to [console.x.ai](https://console.x.ai)
-2. Sign up / Sign in
-3. Create an API key
-4. Add to `agent/.env`:
-
-```env
-XAI_API_KEY=xai-xxxxxxxxx
-XAI_MODEL=grok-3-mini-fast
-```
-
-> **Note:** Grok offers free API credits for new accounts.
-
----
-
-## OpenAI API Setup (Optional)
-
-1. Go to [platform.openai.com](https://platform.openai.com)
-2. Create an API key
-3. Add to `agent/.env`:
-
-```env
-OPENAI_API_KEY=sk-xxxxxxxxx
-OPENAI_MODEL=gpt-4o-mini
-```
-
-> Managers can switch between Grok and OpenAI from the dashboard Settings page.
-
----
-
-## Testing with Mock Emails
-
-If you don't have Gmail connected yet, you can test the full flow using the API:
-
-```bash
-# 1. Login to get JWT token
-TOKEN=$(curl -s -X POST http://localhost/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@kasparro.com","password":"admin123"}' \
-  | jq -r '.token')
-
-# 2. Send a test email for processing
-curl -X POST http://localhost/api/email/test \
-  -H "Authorization: Bearer $TOKEN" \
+curl -X POST http://localhost/api/agent/analyze \
   -H "Content-Type: application/json" \
   -d '{
-    "from_email": "customer@example.com",
-    "from_name": "John Doe",
-    "subject": "Refund Request - Order #12345",
-    "body": "Hi, I ordered a laptop last week but it arrived damaged. I would like a full refund. Order number is #12345. Please help ASAP."
+    "customer_email": "test@example.com",
+    "subject": "Where is my order?",
+    "message": "I ordered this 3 weeks ago and tracking has not updated.",
+    "llm_provider": "grok"
   }'
+```
+This forces the LangGraph pipeline to execute, draft a response, and insert a ticket into your dashboard queue.
 
-# 3. Check the dashboard — a new ticket should appear!
+## 📁 Project Structure
+```text
+kasparro-AI-/
+├── agent/            # Python FastAPI microservice (LangGraph AI logic)
+├── backend/          # Node.js Express API (Auth, DB, Orchestration)
+├── frontend/         # React SPA (Tailwind CSS, Recharts)
+├── docs/             # Technical and Product documentation
+├── screenshots/      # Application UI screenshots
+└── nginx/            # Reverse proxy configuration
 ```
 
----
+## 🎥 Demo Video
+[Insert Link to YouTube/Drive video here]
 
-## API Documentation
+## 📸 Screenshots
+*   ![Dashboard / Ticket List](./screenshots/02-dashboard.png)
+*   ![Ticket Card with AI Draft](./screenshots/03-ticket-card-urgent.png)
+*   ![Approve Modal](./screenshots/05-approve-modal.png)
+*   ![Analytics Page](./screenshots/08-analytics-kpis.png)
+*   ![LLM Provider Selector](./screenshots/10-llm-selector.png)
 
-### Authentication
+*(Add your screenshots to the `/screenshots` directory)*
 
-| Method | Endpoint                    | Description              |
-|--------|-----------------------------|--------------------------|
-| POST   | `/api/auth/login`           | Login (returns JWT)      |
-| POST   | `/api/auth/logout`          | Logout                   |
-| GET    | `/api/auth/me`              | Get current user         |
-| PATCH  | `/api/auth/llm-preference`  | Switch LLM provider      |
+## 📄 Documentation
+Dive deeper into the architecture and product decisions:
+*   [Product Document](./docs/PRODUCT_DOCUMENT.md)
+*   [Technical Document](./docs/TECHNICAL_DOCUMENT.md)
+*   [Decision Log](./docs/DECISION_LOG.md)
+*   [Walkthrough](./docs/WALKTHROUGH.md)
 
-### Tickets
+## 👤 Contribution Note
+This was built as a solo project for the Kasparro AI Commerce Hackathon. Time split:
+*   **40% Product Thinking:** Architecture decisions, UI/UX design, business rules, human-in-the-loop safety scope.
+*   **60% Engineering:** Multi-container deployment, LangGraph implementation, DB integration, debugging.
 
-| Method | Endpoint                          | Description                    |
-|--------|-----------------------------------|--------------------------------|
-| GET    | `/api/tickets`                    | List tickets (filtered, paged) |
-| GET    | `/api/tickets/:id`                | Get single ticket              |
-| PATCH  | `/api/tickets/:id/approve`        | Approve + send email           |
-| PATCH  | `/api/tickets/:id/reject`         | Reject with reason             |
-| PATCH  | `/api/tickets/:id/regenerate`     | Regenerate AI draft            |
-| GET    | `/api/tickets/analytics/summary`  | Full analytics summary         |
+## 🔮 Future Roadmap
+*   **Omnichannel Ingestion:** Expand beyond Gmail to include Slack, WhatsApp, and Instagram DMs.
+*   **Autonomous Resolution Execution:** Connect directly to Shopify/Stripe APIs so the AI can execute actual refunds instead of just drafting the email.
+*   **CRM Synchronization:** Two-way sync with enterprise systems like Zendesk and Salesforce.
 
-### Audit
-
-| Method | Endpoint            | Description                |
-|--------|---------------------|----------------------------|
-| GET    | `/api/audit`        | Paginated audit logs       |
-| GET    | `/api/audit/export` | Export to CSV              |
-| GET    | `/api/audit/health` | Service health check       |
-
-### AI Agent (FastAPI)
-
-| Method | Endpoint               | Description                |
-|--------|------------------------|----------------------------|
-| POST   | `/api/agent/chat`      | Analyze email              |
-| POST   | `/api/agent/regenerate`| Regenerate draft           |
-| GET    | `/api/agent/providers` | List LLM providers         |
-| POST   | `/api/email/send`      | Send email via Gmail       |
-| POST   | `/api/email/test`      | Inject test email          |
+## 📝 License
+MIT License. 
 
 ---
-
-## Dashboard Pages
-
-| Page         | Route        | Features                                              |
-|-------------|-------------|-------------------------------------------------------|
-| **Login**    | `/login`     | Email/password auth, JWT, Kasparro branding           |
-| **Dashboard**| `/dashboard` | KPI cards, AI performance, 7-day trend                |
-| **Tickets**  | `/tickets`   | Filter/search, approve/edit/reject/regenerate, modals |
-| **Analytics**| `/analytics` | Area chart, donut, sentiment bars, LLM usage          |
-| **Audit Log**| `/audit`     | Action table, date filters, CSV export                |
-| **Settings** | `/settings`  | LLM switch, dark mode, password, health panel         |
-
----
-
-## Project Structure
-
-```
-kasparoAi/
-├── docker-compose.yml          # Development orchestration
-├── docker-compose.prod.yml     # Production overrides
-├── .env.example                # Environment template
-├── README.md
-│
-├── nginx/
-│   └── nginx.conf              # Reverse proxy + gzip + caching
-│
-├── frontend/                   # React 18 + Tailwind CSS
-│   ├── src/
-│   │   ├── context/            # AuthContext (JWT + user state)
-│   │   ├── hooks/              # useTickets, useAnalytics, useAuditLogs, useDarkMode, useLLMProvider
-│   │   ├── components/         # Sidebar, Navbar, TicketCard, Modals, DashboardLayout
-│   │   ├── pages/              # Login, Dashboard, Tickets, Analytics, Audit, Settings
-│   │   └── services/           # Axios instance with interceptors
-│   └── Dockerfile
-│
-├── backend/                    # Node.js + Express
-│   ├── src/
-│   │   ├── controllers/        # auth, tickets, audit
-│   │   ├── services/           # auth, tickets, redis, agent
-│   │   ├── middleware/         # JWT, rate limiter, error handler
-│   │   ├── routes/             # auth, tickets, audit
-│   │   └── db/                 # SQL schema + seed
-│   └── Dockerfile
-│
-└── agent/                      # FastAPI + LangGraph
-    ├── src/
-    │   ├── agent/              # state, graph, nodes, tools
-    │   ├── routers/            # agent, email
-    │   └── services/           # llm, gmail, email_poller, agent
-    └── Dockerfile
-```
-
----
-
-## License
-
-MIT © RohanTechLabs
+*Built with precision by **rohantechlabs**.*
