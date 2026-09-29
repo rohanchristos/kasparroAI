@@ -108,7 +108,7 @@ kasparro-AI-/
 ```
 
 ## 🎥 Demo Video
-[Insert Link to YouTube/Drive video here]
+[In YouTube unlisted]
 
 ## 📸 Screenshots
 *   ![Dashboard / Ticket List](./screenshots/02-dashboard.png)
@@ -117,7 +117,7 @@ kasparro-AI-/
 *   ![Analytics Page](./screenshots/08-analytics-kpis.png)
 *   ![LLM Provider Selector](./screenshots/10-llm-selector.png)
 
-*(Add your screenshots to the `/screenshots` directory)*
+*(all screenshots are in the `/screenshots` directory)*
 
 ## 📄 Documentation
 Dive deeper into the architecture and product decisions:
