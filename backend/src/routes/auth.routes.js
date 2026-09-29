@@ -31,6 +31,26 @@ router.post(
   authController.login,
 );
 
+// ── POST /register ──────────────────────────────────────────
+router.post(
+  '/register',
+  authLimiter,
+  [
+    body('email')
+      .isEmail()
+      .withMessage('Valid email is required')
+      .normalizeEmail(),
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('Password must be at least 6 characters'),
+    body('full_name')
+      .trim()
+      .notEmpty()
+      .withMessage('Full name is required'),
+  ],
+  authController.register,
+);
+
 // ── POST /logout ────────────────────────────────────────────
 router.post('/logout', verifyToken, authController.logout);
 

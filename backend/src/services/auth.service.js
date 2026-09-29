@@ -141,4 +141,57 @@ const updateLlmPreference = async (userId, provider) => {
   return user;
 };
 
-module.exports = { login, getCurrentUser, logout, updateLlmPreference };
+/**
+ * Register a new user account.
+ *
+ * @param {string} email
+ * @param {string} password
+ * @param {string} fullName
+ * @returns {Promise<{ token: string, user: object }>}
+ */
+const register = async (email, password, fullName) => {
+  // 1. Check if email already exists
+  const existing = await query(
+    `SELECT id FROM users WHERE email = $1`,
+    [email.toLowerCase().trim()],
+  );
+
+  if (existing.rows.length > 0) {
+    const err = new Error('An account with this email already exists');
+    err.statusCode = 409;
+    err.code = 'EMAIL_EXISTS';
+    throw err;
+  }
+
+  // 2. Hash password
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // 3. Insert new user
+  const result = await query(
+    `INSERT INTO users (email, password_hash, full_name, role, llm_preference)
+     VALUES ($1, $2, $3, 'manager', 'grok')
+     RETURNING id, email, full_name, role, llm_preference, created_at, updated_at`,
+    [email.toLowerCase().trim(), passwordHash, fullName.trim()],
+  );
+
+  const user = result.rows[0];
+
+  // 4. Build JWT payload
+  const payload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    full_name: user.full_name,
+    llm_preference: user.llm_preference,
+  };
+
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+  // 5. Store session in Redis (24h)
+  await setSession(user.id, payload, 86_400);
+  await setUserLLMPreference(user.id, user.llm_preference);
+
+  return { token, user };
+};
+
+module.exports = { login, register, getCurrentUser, logout, updateLlmPreference };

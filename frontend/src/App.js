@@ -9,6 +9,7 @@ import TicketsPage from './pages/TicketsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import AuditPage from './pages/AuditPage';
+import SignUpPage from './pages/SignUpPage';
 
 /**
  * ProtectedRoute — redirects to /login if not authenticated.
@@ -73,6 +74,14 @@ export default function App() {
             element={
               <GuestRoute>
                 <LoginPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <GuestRoute>
+                <SignUpPage />
               </GuestRoute>
             }
           />

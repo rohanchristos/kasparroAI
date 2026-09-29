@@ -1,26 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Zap, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Zap, Loader2, UserPlus } from 'lucide-react';
 
 /**
- * Login Page — centered card with email/password authentication.
- * Features Kasparro branding, dark mode support, and error states.
+ * Sign Up Page — centered card with registration form.
+ * Matches the visual design of LoginPage with Kasparro branding.
  */
-export default function LoginPage() {
+export default function SignUpPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
 
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please enter both email and password');
+
+    if (!fullName || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -28,12 +41,12 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await login(email, password);
+      await register(email, password, fullName);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          'Invalid credentials. Please try again.'
+          'Registration failed. Please try again.'
       );
     } finally {
       setIsLoading(false);
@@ -68,10 +81,10 @@ export default function LoginPage() {
         <div className="glass-card p-8">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Welcome back
+              Create an account
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Sign in to your manager dashboard
+              Sign up to access the manager dashboard
             </p>
           </div>
 
@@ -85,43 +98,62 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Full Name */}
+            <div>
+              <label
+                htmlFor="signup-name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+              >
+                Full name
+              </label>
+              <input
+                id="signup-name"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="John Doe"
+                className="input"
+                autoComplete="name"
+                autoFocus
+              />
+            </div>
+
             {/* Email */}
             <div>
               <label
-                htmlFor="login-email"
+                htmlFor="signup-email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
               >
                 Email address
               </label>
               <input
-                id="login-email"
+                id="signup-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="manager@kasparro.com"
+                placeholder="you@company.com"
                 className="input"
                 autoComplete="email"
-                autoFocus
               />
             </div>
 
             {/* Password */}
             <div>
               <label
-                htmlFor="login-password"
+                htmlFor="signup-password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
               >
                 Password
               </label>
               <div className="relative">
                 <input
-                  id="login-password"
+                  id="signup-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="input pr-10"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -136,6 +168,28 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Must be at least 6 characters
+              </p>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label
+                htmlFor="signup-confirm-password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+              >
+                Confirm password
+              </label>
+              <input
+                id="signup-confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="input"
+                autoComplete="new-password"
+              />
             </div>
 
             {/* Submit */}
@@ -143,32 +197,32 @@ export default function LoginPage() {
               type="submit"
               disabled={isLoading}
               className="btn-primary w-full"
-              id="login-submit"
+              id="signup-submit"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Signing in…
+                  Creating account…
                 </>
               ) : (
-                'Sign in'
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  Create account
+                </>
               )}
             </button>
           </form>
 
-          {/* Sign up link */}
+          {/* Link to login */}
           <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-              Don't have an account?{' '}
+              Already have an account?{' '}
               <Link
-                to="/signup"
+                to="/login"
                 className="font-medium text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
               >
-                Create account
+                Sign in
               </Link>
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
-              Demo: sarah.chen@kasparro.ai / Manager@123
             </p>
           </div>
         </div>

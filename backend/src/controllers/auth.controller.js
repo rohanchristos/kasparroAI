@@ -97,4 +97,33 @@ const updateLlmPreference = async (req, res, next) => {
   }
 };
 
-module.exports = { login, logout, getMe, updateLlmPreference };
+/**
+ * POST /api/auth/register
+ */
+const register = async (req, res, next) => {
+  try {
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid input',
+        statusCode: 400,
+        details: errors.array(),
+      });
+    }
+
+    const { email, password, full_name } = req.body;
+    const result = await authService.register(email, password, full_name);
+
+    res.status(201).json({
+      message: 'Account created successfully',
+      token: result.token,
+      user: result.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { login, register, logout, getMe, updateLlmPreference };
